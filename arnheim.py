@@ -89,7 +89,7 @@ model, _ = clip.load(CLIP_MODEL, device, jit=False, download_root=model_dst)
 # pip install reindent
 # reindent arnheim.py
 #
-# fixed
+# fixed (well, not docstrings, but f it)
 
 # In[ ]:
 
@@ -834,7 +834,8 @@ class Evaluator:
 
 # In[ ]:
 
-
+# NOTE(evan): were these magic numbers defined somewhere? or this like,
+# imagenet or coco stuff? i cant remember what CLIP was fitted to.
 IMAGE_MEAN = torch.tensor([0.48145466, 0.4578275, 0.40821073]).cuda()
 IMAGE_STD = torch.tensor([0.26862954, 0.26130258, 0.27577711]).cuda()
 
@@ -964,7 +965,8 @@ def truncation_selection(population, fitnesses, evaluator, use_crossover,
 # In[ ]:
 
 
-VERBOSE_DURATION = False
+#VERBOSE_DURATION = False
+VERBOSE_DURATION = True
 
 @ray.remote
 class Worker(object):
@@ -1009,6 +1011,10 @@ def create_workers(num_workers, image_size, drawing_lstm_spec,
 
 # In[ ]:
 
+# NOTE(evan):  seeing "plt.show()"
+# is this plotting stuff assuming the code is always run in a headed mode?
+# (like a notebook, or local) because "500-1000 gpus" means they dind't
+# do no colab and ran headless
 
 def plot_training_res(batch_drawings, fitness_history, idx=None):
     """Plot fitnesses and timings.
