@@ -246,6 +246,7 @@ def paint_over_image(img, strokes, painting_commands,
     # Loop over all the top level...
     t0_over = time.time()
     num_strokes = sum(len(s) for s in strokes)
+    _int_num_strokes = int(num_strokes)
     translations = np.zeros((2, num_strokes,), np.float32)
     translations2 = np.zeros((2, num_strokes,), np.float32)
     angles = np.zeros((num_strokes,), np.float32)
@@ -345,9 +346,70 @@ def paint_over_image(img, strokes, painting_commands,
     rgbas[:, :3] = _clip_colour(rgbas[:, :3])
     rgbas[:, 3] = (np.clip(5.0 * np.abs(rgbas[:, 3]), 0, 255)).astype(np.int32)
     weights = (np.clip(np.round(weights * b + a), 2, c)).astype(np.int32)
-    for k in range(num_strokes):
-        canvas.line((rrm[k], ccm[k], rrm[k+num_strokes], ccm[k+num_strokes]),
-                    fill=tuple(rgbas[k]), width=weights[k])
+    #for k in range(num_strokes):
+    for k in range(_int_num_strokes):
+        # it no like this line:
+        '''
+        Traceback (most recent call last):
+        File "/home/evan/Projects/arnheim/arnheim.py", line 1246, in <module>
+            evolution_loop(drawing_population, workers, drawing_evaluator, NUM_GENERATIONS,
+        File "/home/evan/Projects/arnheim/arnheim.py", line 1121, in evolution_loop
+            data = ray.get(futures)
+                ^^^^^^^^^^^^^^^^
+        File "/home/evan/.pyenv/versions/3117/lib/python3.11/site-packages/ray/_private/auto_init_hook.py", line 21, in auto_init_wrapper
+            return fn(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^
+        File "/home/evan/.pyenv/versions/3117/lib/python3.11/site-packages/ray/_private/client_mode_hook.py", line 103, in wrapper
+            return func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+        File "/home/evan/.pyenv/versions/3117/lib/python3.11/site-packages/ray/_private/worker.py", line 2755, in get
+            values, debugger_breakpoint = worker.get_objects(object_refs, timeout=timeout)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File "/home/evan/.pyenv/versions/3117/lib/python3.11/site-packages/ray/_private/worker.py", line 906, in get_objects
+            raise value.as_instanceof_cause()
+        ray.exceptions.RayTaskError(TypeError): ray::Worker.compute() (pid=164970, ip=192.168.1.15, actor_id=ff25c1a21423b86f6651b53801000000, repr=<arnheim.Worker object at 0x72359b4f9ed0>)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File "/home/evan/Projects/arnheim/arnheim.py", line 984, in compute
+            res = self.evaluator.evaluate_genotype(dna_pickle, genotype_id)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File "/home/evan/Projects/arnheim/arnheim.py", line 823, in evaluate_genotype
+            drawing = self.drawing_generator.draw_from_genotype(genotype)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File "/home/evan/Projects/arnheim/arnheim.py", line 676, in draw_from_genotype
+            return self._interpret_genotype(self.genotype)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File "/home/evan/Projects/arnheim/arnheim.py", line 670, in _interpret_genotype
+            img = self.drawing_lstm.draw(img, genotype)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File "/home/evan/Projects/arnheim/arnheim.py", line 601, in draw
+            num_strokes = paint_over_image(
+                        ^^^^^^^^^^^^^^^^^
+        File "/home/evan/Projects/arnheim/arnheim.py", line 349, in paint_over_image
+            canvas.line((rrm[k], ccm[k], rrm[k+num_strokes], ccm[k+num_strokes]),
+        File "/home/evan/.pyenv/versions/3117/lib/pycanvas.line((rrm[k], ccm[k], rrm[k+num_strokes], ccm[k+num_strokes]),thon3.11/site-packages/PIL/ImageDraw.py", line 242, in line
+            ink = self._getink(fill)[0]
+                ^^^^^^^^^^^^^^^^^^
+        File "/home/evan/.pyenv/versions/3117/lib/python3.11/site-packages/PIL/ImageDraw.py", line 159, in _getink
+            result_ink = self.draw.draw_ink(ink)
+                        ^^^^^^^^^^^^^^^^^^^^^^^
+        TypeError: 'numpy.float32' object cannot be interpreted as an integer
+        '''
+        #canvas.line((rrm[k], ccm[k], rrm[k+num_strokes], ccm[k+num_strokes]),
+        #            fill=tuple(rgbas[k]), width=weights[k])
+        rrmk = rrm[k]
+        ccmk = ccm[k]
+        rrmks = rrm[k+_int_num_strokes]
+        ccmks = [k+_int_num_strokes]
+        rgbask = rgbas[k].astype(np.int32)
+        fill = tuple([int(r) for r in rgbask])
+        print(f"{fill = }")
+        widthk = weights[k]
+        canvas.line(
+            (rrmk, ccmk, rrmks, rgbask),
+            fill=fill,
+            width=widthk,
+        )
     img[:] = np.asarray(img_pil)[:]
     t3_over = time.time()
     if VERBOSE_CODE:
