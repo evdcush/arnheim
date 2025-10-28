@@ -62,7 +62,8 @@ CLIP_MODEL = "ViT-B/32"
 model_dst_path = Path.home() / 'Models/clip'
 model_dst = str(model_dst_path)
 #device = torch.device("cuda")
-device = torch.device("cuda:1")
+gpu_id = 1 if torch.cuda.device_count() > 1 else 0
+device = torch.device(f"cuda:{gpu_id}")
 print(f"Downloading CLIP model {CLIP_MODEL} to {model_dst}")
 #model, _ = clip.load(CLIP_MODEL, device, jit=False, download_root=model_dst)
 #model, preproc = clip.load(CLIP_MODEL, device, jit=False, download_root=model_dst)
@@ -1156,13 +1157,20 @@ def evolution_loop(population, worker_pool, evaluator, num_generations,
 # In[ ]:
 
 
+# NOTE(evan): CAREFUL HERE!
+#             DON'T GO DIFFING HYPERPARMAS TOO HARD, OR ELSE YOU'LL NOT KNOW
+#             WHAT'S WHAT. but then again, are these hyperparams at all
+#             representative of the config used in the published work?
+
 #@title Hyperparameters
 
 #@markdown Evolution parameters: population size and number of generations.
-POPULATION_SIZE = 10  #@param {type:"slider", min:4, max:100, step:2}
+#POPULATION_SIZE = 10  #@param {type:"slider", min:4, max:100, step:2}
+POPULATION_SIZE = 50  # bumped this up; not sure what the tradeoff is here. this make it slower to run.
 NUM_GENERATIONS = 5000  #@param {type:"integer", min:100}
 #@markdown Number of workers working in parallel (should be equal to or smaller than the population size).
-NUM_WORKERS = 10  #@param {type:"slider", min:4, max:100, step:2}
+# ah shouldnt' num workers be tuned to my cpu/compute?
+NUM_WORKERS = 25  #@param {type:"slider", min:4, max:100, step:2}
 #@markdown Crossover in evolution.
 USE_CROSSOVER = True  #@param {type:"boolean"}
 CROSSOVER_PROB = 0.01  #@param {type:"number"}
@@ -1182,10 +1190,15 @@ NET_LSTM_HIDDENS = 40  #@param {type:"integer"}
 NET_MLP_HIDDENS = 20  #@param {type:"integer"}
 # Scales the values used in genotype's initialisation.
 DNA_SCALE = 1.0  #@param {type:"number"}
+# NOTE(evan): i'd like to get bigger images, but I don't know how bad this will affect things
 IMAGE_SIZE = 224  #@param {type:"integer"}
-VERBOSE_CODE = False  #@param {type:"boolean"}
-VISUALIZE_GENOTYPE = False  #@param {type:"boolean"}
-VERBOSE_MUTATION = False  #@param {type:"boolean"}
+#VERBOSE_CODE = False  #@param {type:"boolean"}
+#VISUALIZE_GENOTYPE = False  #@param {type:"boolean"}
+#VERBOSE_MUTATION = False  #@param {type:"boolean"}
+VERBOSE_CODE     = True
+VERBOSE_MUTATION = True
+VISUALIZE_GENOTYPE = True
+
 #@markdown Number of generations between new plots.
 PLOT_EVERY_NUM_GENS = 5  #@param {type:"integer"}
 #@markdown Whether to show all samples in the batch when plotting.
@@ -1203,7 +1216,9 @@ assert POPULATION_SIZE % NUM_WORKERS == 0, "POPULATION_SIZE not multiple of NUM_
 
 
 # @title Get text input and run evolution
-PROMPT = "an apple"  #@param {type:"string"}
+#PROMPT = "an apple"  #@param {type:"string"}
+#PROMPT = 'bronze columns of the gods'
+PROMPT = 'green frog on lotus flower'
 
 # Tokenize prompts and coompute CLIP features.
 text_input = clip.tokenize(PROMPT).to(device)
